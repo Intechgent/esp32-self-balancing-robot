@@ -198,8 +198,11 @@ self-balancing-bot/
 
 ## Acknowledgements
 
-<!-- TODO: credit tutorials, libraries, or references you learned from.
-     Honest attribution reads well and is good practice. -->
+Built as a self-directed learning project. I used an AI assistant as a
+guide - for explaining concepts (sensor fusion, PID control), reviewing
+code, and sanity-checking my hardware choices. All design decisions are my
+own, and every concept in this repo is documented in my own words in the
+[Build Log](docs/BUILD_LOG.md) to reflect my actual understanding.
 
 ## License
 
