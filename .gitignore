@@ -1,0 +1,28 @@
+# Build artifacts
+build/
+*.bin
+*.elf
+*.hex
+*.map
+
+# Arduino / PlatformIO
+.pio/
+.vscode/
+*.o
+*.a
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / temp
+*.swp
+*~
+.idea/
+
+# Python (if you add sim/analysis scripts later)
+__pycache__/
+*.pyc
+.venv/
+venv/
