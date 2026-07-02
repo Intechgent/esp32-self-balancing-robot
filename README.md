@@ -74,7 +74,7 @@ flowchart LR
 
 ---
 
-## Hardware (Bill of Materials)
+## Hardware
 
 | Component | Part | Role |
 |---|---|---|
@@ -145,17 +145,10 @@ Before the hardware arrived, I prototyped the control loop in
 
 ## Build Log
 
-> This is the most valuable section for a portfolio. Keep a running,
-> honest log of problems and how you solved them. Recruiters and professors
-> care more about *how you debug* than about a clean final result.
+I keep a running, honest log of what I built, what broke, and how I fixed it -
+documenting my problem-solving, not just the final result.
 
-<!-- Template - copy this block per entry as you build: -->
-
-### [Date] - [Short title, e.g. "First IMU reading"]
-- **What I did:**
-- **What went wrong:**
-- **How I fixed it:**
-- **What I learned:**
+📓 **[Read the full Build Log →](docs/BUILD_LOG.md)**
 
 ---
 
