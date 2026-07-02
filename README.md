@@ -74,7 +74,7 @@ flowchart LR
 
 ---
 
-## Hardware (Bill of Materials)
+## Hardware
 
 | Component | Part | Role |
 |---|---|---|
