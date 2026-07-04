@@ -26,18 +26,39 @@ accelerometer angle is correct on average but noisy, and it can't tell gravity
 apart from the robot's own motion - a problem, because a balancing bot
 accelerates constantly.
 
-**How I fixed it:**
-Added the gyroscope (which measures rotation *rate*) and fused both sensors
-with a **complementary filter**:
+**The fix (what I understood I needed):**
+Add the gyroscope (which measures rotation *rate*) and fuse both sensors with a
+**complementary filter**:
 `angle = α·(angle + gyro_rate·dt) + (1−α)·accel_angle`, with α = 0.98.
 The gyro handles fast changes; the accelerometer slowly corrects gyro drift.
-After this, the fused angle was visibly smoother than the raw accelerometer
-angle, and responded correctly to rotation.
+I implement and verify this in the next entry (2026-07-04).
 
 **Takeaway:**
 Understood *why* sensor fusion is necessary rather than just copying it - each
 sensor covers the other's weakness. This is the foundation the whole control
 loop sits on.
+
+**Verified findings (accelerometer-only baseline):**
+- Resting angle reads 0°; tilting changes it, rotation alone does not (as expected)
+- X-axis acceleration has no effect - confirms only Y and Z are in the atan2 formula
+- y=1g → 90°, z=1g → 0°, y=z=1g → 45°: atan2 computes the *direction* of gravity
+  between the two axes, not just magnitudes
+
+---
+
+## 2026-07-04 - Verifying the complementary filter (step 2)
+
+Re-ran the fused-angle code deliberately, testing each axis one at a time.
+
+**Verified findings**
+- X-axis *rotation* now moves the Fused angle but not Accel - the gyro is
+  contributing, and Accel's blindness to rotation is confirmed
+- Y/Z rotation affect nothing - we only read gyro.x, since a balancing bot
+  tips around one axis only
+- Accel jumps to ±90° when gravity is fully on y, and 180° when z is
+  negative (sensor upside down)
+- Fused follows motion quickly but settles toward Accel's value - the 2%
+  accelerometer correction visibly anchoring the gyro
 
 ---
 
