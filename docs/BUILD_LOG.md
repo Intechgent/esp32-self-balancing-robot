@@ -62,6 +62,44 @@ Re-ran the fused-angle code deliberately, testing each axis one at a time.
 
 ---
 
+## 2026-07-04 - PID controller (step 3)
+
+**What I did:**
+Added a PID controller that converts the fused tilt angle into a motor
+command: `output = Kp·error + Ki·errorSum + Kd·dError`, clamped to the motor
+range (-255 to 255). Started with Kp=25, Ki=0, Kd=0.8.
+
+**Why I set Ki = 0 to start:**
+Deliberately disabled I so I can tune P and D first - the textbook PID tuning
+order (get P and D stable, add I last to remove residual lean). Turning I on
+too early makes it fight P and D before they're dialed in.
+
+**What P, I, D each do:**
+- P pushes harder the more I'm tilted, but alone it overshoots and wobbles.
+- D brakes based on how fast the angle is changing, damping the wobble.
+- I accumulates small persistent leans and corrects steady offset.
+
+**Verified findings (via Wokwi sliders):**
+- Positive Y acceleration → negative output, and vice versa: the controller
+  pushes *against* the tilt, as intended.
+- Output saturates to ±255 quickly with few in-between values - expected in
+  sim, because Kp=25 is high and the sliders jump the angle in coarse steps,
+  so even small errors exceed the clamp. Confirms the clamp works.
+- All inputs zero → angle 0.0, output ~0: balanced state produces no command.
+
+**What I learned:**
+The clamp prevents meaningless out-of-range motor values, and slider-driven
+testing proves the control *logic* even though the sim has no real physics to
+"fall." Smooth in-between outputs will appear on real hardware with fine tilts
+and proper tuning.
+
+**Known issue (next):**
+`errorSum` is currently unclamped, so once I enable Ki it can wind up during a
+sustained lean and overshoot on recovery. I'll add anti-windup (clamp the
+integral, or only integrate near upright) before turning Ki on.
+
+---
+
 <!-- Copy this template for each new entry:
 
 ## YYYY-MM-DD - [Short title]
