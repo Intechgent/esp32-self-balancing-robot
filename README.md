@@ -79,7 +79,7 @@ flowchart LR
 | Component | Part | Role |
 |---|---|---|
 | Microcontroller | ESP32-32D DevKit V1 (+ GPIO expansion board) | The brain; runs the control loop |
-| IMU | GY-521 MPU6050 (6-axis accel + gyro) | Measures tilt angle |
+| IMU | GY-521 module (6-axis accel + gyro) — mine reports `WHO_AM_I = 0x70`, i.e. an **MPU6500**, not a true MPU6050 | Measures tilt angle |
 | Motor driver | TB6612FNG (dual channel) | Lets the ESP32 drive the motors |
 | Motors + wheels | 2× TT gear motors + wheels (from 2WD chassis kit) | Actuation |
 | Chassis | 2-layer acrylic 2WD kit (incl. encoders + ultrasonic sensor) | Body |
@@ -101,8 +101,8 @@ flowchart LR
 |---|---|---|
 | MPU6050 VCC | ESP32 3V3 | |
 | MPU6050 GND | ESP32 GND | |
-| MPU6050 SDA | ESP32 GPIO __ | I2C data |
-| MPU6050 SCL | ESP32 GPIO __ | I2C clock |
+| MPU6050 SDA | ESP32 GPIO 21 | I2C data |
+| MPU6050 SCL | ESP32 GPIO 22 | I2C clock |
 | TB6612 PWMA / PWMB | ESP32 GPIO __ / __ | motor speed |
 | TB6612 AIN1/2, BIN1/2 | ESP32 GPIO __ | motor direction |
 | TB6612 VM | Battery + (7.4V) | motor power |
@@ -118,26 +118,32 @@ flowchart LR
 ## Software
 
 ### Requirements
-- [Arduino IDE](https://www.arduino.cc/en/software) (or PlatformIO)
-- ESP32 board support installed via Boards Manager
-- Libraries: <!-- TODO: list the exact libraries you used, e.g. an MPU6050 lib -->
+- [PlatformIO IDE](https://platformio.org/install/ide?install=vscode) (VS Code extension)
+- Silicon Labs [CP210x USB-to-UART driver](https://www.silabs.com/software-and-tools/usb-to-uart-bridge-vcp-drivers) — needed on Windows before the board appears as a COM port
+- No external IMU library: the sensor registers are read directly over `Wire`
+  (see [Build Log](docs/BUILD_LOG.md) for why)
 
 ### Setup
 ```bash
 # 1. Clone the repo
-git clone https://github.com/<your-username>/self-balancing-bot.git
+git clone https://github.com/Intechgent/esp32-self-balancing-robot.git
 
-# 2. Open src/ in the Arduino IDE
-# 3. Select board: "ESP32 Dev Module"
-# 4. Select the correct COM port
-# 5. Upload
+# 2. Open the folder in VS Code - PlatformIO detects platformio.ini
+# 3. Build   (checkmark icon)
+# 4. Upload  (arrow icon)  - close the Serial Monitor first, or the port is locked
+# 5. Serial Monitor (plug icon) @ 115200 baud
 ```
 
-<!-- TODO: expand once your code is written. -->
+Board config lives in [`platformio.ini`](platformio.ini) (`esp32doit-devkit-v1`).
 
 ### Simulation
 Before the hardware arrived, I prototyped the control loop in
 [Wokwi](https://wokwi.com) (browser-based ESP32 simulator). See `/simulation`.
+
+> `simulation/` is a **frozen snapshot** of the simulator stage (tilt sensing →
+> complementary filter → PID law). Live firmware now lives in `src/`. Note the
+> sim had no motor/physics model, so the PID gains there are untested guesses —
+> real tuning only becomes possible on hardware.
 
 <!-- TODO: link your Wokwi project once you make it. -->
 
