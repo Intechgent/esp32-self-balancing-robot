@@ -203,6 +203,44 @@ any control to it.
 
 ---
 
+## 2026-07-21 - Motor driver bring-up (TB6612), and a battery-holder red herring
+
+**What I did:**
+Wired one motor to the TB6612FNG (channel A: `PWMA` + `AIN1`/`AIN2` → `AO1`/`AO2`),
+powered the driver from a single charged 18650 (~3.7 V - the holder is still
+faulty), and drove the motor forward / stop / reverse from code using the ESP32
+`ledc` PWM API. A bring-up test only - no IMU, no control - to prove the
+driver + motor + code path before wiring anything to it.
+
+**What went wrong (the long part):**
+The motor wouldn't spin, and I spent a long time assuming the driver was at fault.
+I isolated it one layer at a time instead:
+- ESP32 + code fine (serial printed forward/stop/reverse)
+- Motor fine (spun on a single bare cell)
+- Common ground, STBY, VCC vs VM, channel A vs B - all checked; even swapped the
+  motor to channel B and it was still dead.
+The actual cause was the **battery holder**: single cells spun the motor, but the
+assembled holder (both cells in series, through the switch) delivered no power to
+its output wires - a bad internal contact. A good driver with no VM power looks
+exactly like a broken driver, on both channels.
+
+**What I learned:**
+- Don't anchor on the newest / most complex part. I suspected the driver for ages
+  when the dumbest component - a ~$2 holder - was the fault.
+- Test the *assembled* power source, not just individual cells. Checking the
+  holder's real output was the one step I skipped early and should have done first.
+- Stranded holder leads don't seat reliably in dupont/breadboard holes; they need
+  tinning or a soldered pin.
+
+**Result:** motor runs forward and reverse on command - the "act" layer works.
+(Tested on a single cell at ~3.7 V; running it off the full 7.4 V pack is pending
+a working holder.)
+
+**Next:** sort out reliable pack power (fix/replace the holder), then connect the
+PID output to the motor command.
+
+---
+
 <!-- Copy this template for each new entry:
 
 ## YYYY-MM-DD - [Short title]
