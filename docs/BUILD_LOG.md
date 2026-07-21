@@ -166,6 +166,43 @@ cleaner signal.
 
 ---
 
+## 2026-07-21 - Complementary filter on real hardware (sense layer validated)
+
+**What I did:**
+Ported the complementary filter from the Wokwi sim onto the real MPU6500. Fused
+the accelerometer tilt angle (`atan2(y, z)`) with the integrated gyro rate into
+one stable angle, reading the registers directly. Added a startup step that
+averages 500 samples while the board is held still to measure the resting gyro
+bias, then subtracts it every loop.
+
+**Two conversions I had to keep straight:**
+`atan2` returns radians, so the accel angle still needs `* 180/PI`. The gyro,
+read as raw/131, is already deg/s and must NOT get that conversion - applying
+both would make the gyro term ~57x too large. Same idea, adjacent lines, easy
+to conflate - so I commented it explicitly.
+
+**Verified findings (real hardware, tilted by hand):**
+- At rest: fused holds steady at ~4.2° while the raw accel angle jitters ±0.5°,
+  with no creep over a minute - the bias subtraction is working.
+- Tilt and hold ~17°: accel and fused both move there and agree when steady;
+  fused is visibly smoother through the motion.
+- Sign check: during a rotation the fused angle *leads* the accel angle in the
+  same direction (gyro reacts instantly, the noisy accel catches up). Because it
+  tracks *with* accel rather than against it, the gyro sign is correct on this
+  mounting - no flip needed. I'd left a one-line `GYRO_SIGN` switch in case it
+  wasn't.
+
+**What I learned:**
+The "gyro leads, accelerometer catches up" behaviour is the whole point of the
+filter made visible: the gyro gives the fast smooth response, the accelerometer
+slowly anchors it against drift. Seeing it on real, noisy hardware rather than
+the clean sim is what made it click.
+
+**Next:** motor driver bring-up (TB6612FNG), tested in isolation before wiring
+any control to it.
+
+---
+
 <!-- Copy this template for each new entry:
 
 ## YYYY-MM-DD - [Short title]
