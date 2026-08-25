@@ -1,18 +1,18 @@
-// Tobble - integrated control loop: sense -> think -> act.
+// Tobble - integrated control loop: sense -> think -> act, both motors.
 //
-// Combines the three pieces validated separately:
 //   sense  - fused tilt angle from the MPU6500 (complementary filter)
 //   think  - PID turns tilt error into a signed motor command
-//   act    - TB6612FNG drives one motor with that command
+//   act    - TB6612FNG drives BOTH motors with that command
 //
-// Bench check (over serial, no motor power needed): tilt by hand and watch the
-// command flip direction and scale with lean. NOT yet verified on hardware.
-// Physical actuation is also pending a reliable battery pack - the motor drive
-// is wired and called, it just can't move until VM has power.
+// Verified on hardware (2026-08-24, one motor + serial): fused angle -> PID ->
+// command is correct - it scales with lean, flips direction, the 45-degree
+// fall-cutoff fires, and the D-term damps as it returns upright. NOT yet tested:
+// two-motor drive under battery power, and actual balancing (needs assembly +
+// tuning).
 //
-// IMU: this module is an MPU6500 (WHO_AM_I = 0x70), read directly over I2C.
-// Gyro is already deg/s (raw/131) - no rad/s conversion. atan2 returns radians,
-// so only the accel angle gets * 180/PI.
+// IMU: MPU6500 (WHO_AM_I = 0x70), read directly over I2C. Gyro is already deg/s
+// (raw/131) - no rad/s conversion. atan2 returns radians, so only the accel
+// angle gets * 180/PI.
 
 #include <Arduino.h>
 #include <Wire.h>
@@ -22,12 +22,24 @@ const uint8_t MPU          = 0x68;
 const uint8_t PWR_MGMT_1   = 0x6B;
 const uint8_t ACCEL_XOUT_H = 0x3B;
 
-// ---------------- Motor driver (TB6612, channel A) ----------------
+// ---------------- Motor driver (TB6612) ----------------
+// Channel A (one wheel)
 const int PWMA = 25;   // speed (PWM)
 const int AIN1 = 26;   // direction
 const int AIN2 = 27;   // direction
+// Channel B (other wheel)
+const int PWMB = 13;   // speed (PWM)
+const int BIN1 = 32;   // direction
+const int BIN2 = 33;   // direction
 
-const int PWM_CH  = 0;
+// The two motors sit mirrored on the chassis, so the same command can spin them
+// opposite ways. If the bot spins in place instead of driving straight, flip
+// this to true (or swap one motor's output wires).
+const bool MOTOR_B_INVERT = false;
+
+// ledc PWM - one channel per motor
+const int PWM_CH_A = 0;
+const int PWM_CH_B = 1;
 const int PWM_FREQ = 1000;   // Hz
 const int PWM_RES  = 8;      // bits -> duty 0..255
 const int MAX_CMD  = 255;    // motor command clamp
@@ -89,17 +101,23 @@ float calibrateGyroBias(int samples) {
 }
 
 // ---------------- Motor ----------------
-// command: -MAX_CMD..+MAX_CMD. Sign = direction, magnitude = speed.
-void driveMotor(int command) {
+// Drive one channel: sign = direction, magnitude = speed.
+void driveChannel(int in1, int in2, int ch, int command) {
   if (command >= 0) {
-    digitalWrite(AIN1, HIGH);
-    digitalWrite(AIN2, LOW);
+    digitalWrite(in1, HIGH);
+    digitalWrite(in2, LOW);
   } else {
-    digitalWrite(AIN1, LOW);
-    digitalWrite(AIN2, HIGH);
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, HIGH);
     command = -command;
   }
-  ledcWrite(PWM_CH, command);
+  ledcWrite(ch, command);
+}
+
+// Drive both motors from one command (channel B mirrored if MOTOR_B_INVERT).
+void driveMotors(int command) {
+  driveChannel(AIN1, AIN2, PWM_CH_A, command);
+  driveChannel(BIN1, BIN2, PWM_CH_B, MOTOR_B_INVERT ? -command : command);
 }
 
 void setup() {
@@ -112,11 +130,11 @@ void setup() {
   writeReg(PWR_MGMT_1, 0x00);   // wake the MPU6500
   delay(100);
 
-  pinMode(AIN1, OUTPUT);
-  pinMode(AIN2, OUTPUT);
-  ledcSetup(PWM_CH, PWM_FREQ, PWM_RES);
-  ledcAttachPin(PWMA, PWM_CH);
-  driveMotor(0);
+  pinMode(AIN1, OUTPUT);  pinMode(AIN2, OUTPUT);
+  pinMode(BIN1, OUTPUT);  pinMode(BIN2, OUTPUT);
+  ledcSetup(PWM_CH_A, PWM_FREQ, PWM_RES);  ledcAttachPin(PWMA, PWM_CH_A);
+  ledcSetup(PWM_CH_B, PWM_FREQ, PWM_RES);  ledcAttachPin(PWMB, PWM_CH_B);
+  driveMotors(0);
 
   Serial.println("Calibrating gyro - keep still...");
   gyroBias = calibrateGyroBias(500);
@@ -154,10 +172,10 @@ void loop() {
   float output = Kp * error + Ki * errorSum + Kd * dError;
   output = constrain(output, -MAX_CMD, MAX_CMD);
 
-  // --- act: drive the motor (stop if the bot has toppled) ---
+  // --- act: drive both motors (stop if the bot has toppled) ---
   int command = (int)output;
   if (fabs(angle) > FALL_LIMIT) command = 0;
-  driveMotor(command);
+  driveMotors(command);
 
   // --- verify over serial (throttled so it's readable while tilting) ---
   static unsigned long lastPrint = 0;

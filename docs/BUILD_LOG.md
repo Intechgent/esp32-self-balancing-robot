@@ -241,6 +241,48 @@ PID output to the motor command.
 
 ---
 
+## 2026-08-24 - Control loop verified on hardware; second motor added
+
+**What I did:**
+Brought the integrated control loop (fused angle → PID → motor command) to life
+on real hardware, verified its logic, and extended it to drive both motors.
+
+**Getting the IMU back (multimeter debugging):**
+After a break, the IMU wouldn't respond - the I2C bus hung (`requestFrom Error
+-1`, then the scanner froze on "Scanning..."). I chased it with the multimeter:
+- The 3.3 V rail read a healthy **3.31 V**, but the IMU's own `VCC` pin read
+  only **1.5 V**.
+- Idle `SDA`/`SCL` sat at ~1.95 V instead of ~3.3 V - the pull-ups were
+  referenced to that starved VCC.
+- Root cause: **dead breadboard holes** on the IMU's power connection, dropping
+  3.31 V → 1.5 V. Below the MPU's ~2.4 V minimum, so it couldn't run and jammed
+  the bus. Moving the IMU power to fresh holes fixed it - the scanner instantly
+  found `0x68`.
+
+**Verified findings (control loop, real hardware):**
+- Tilt past 45° → `cmd 0 STOP`: the fall-cutoff fires (treated as toppled).
+- Tilt ~34° / ~17° → `cmd -255`: big lean = full-power correction, hitting the clamp.
+- Small lean (~4°) → small `cmd`, dropping below the pure-P value as it returns
+  upright - the **D-term damping** made visible.
+This confirms the whole sense → think chain is correct on hardware.
+
+**What I learned:**
+- A frozen I2C scanner means the bus is stuck low - measure the line voltages.
+  Idle I2C should sit near VCC (~3.3 V); much lower = starved supply or a short.
+- Breadboard holes wear out. "Correct" wiring can still fail on a dead hole, and
+  the multimeter is the only way to actually see it.
+
+**Second motor:** added channel B (`BIN1`/`BIN2`/`PWMB` → `BO1`/`BO2`), driven
+from the same command, with a `MOTOR_B_INVERT` flag for the mirrored mounting.
+**Not yet tested** - two-motor drive and balancing wait for assembly, battery
+power, and tuning.
+
+**Next:** mount on the chassis, power both motors from the pack, confirm they
+drive the right way (flip `MOTOR_B_INVERT` if it spins in place), then tune
+`Kp`/`Kd`.
+
+---
+
 <!-- Copy this template for each new entry:
 
 ## YYYY-MM-DD - [Short title]
