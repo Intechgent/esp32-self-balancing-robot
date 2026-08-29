@@ -281,6 +281,20 @@ power, and tuning.
 drive the right way (flip `MOTOR_B_INVERT` if it spins in place), then tune
 `Kp`/`Kd`.
 
+**Update (same day) - both motors driving + bot assembled:**
+Powered both motors from the 7.4 V pack and got them driving from the control
+loop on hardware. The "not yet tested" above came down to loose motor-to-`AO`
+joints: the multimeter showed the driver output was fine (~7.5 V at `AO1`) but no
+voltage reached the motor, so the connection was open. With the motor wires
+seated properly, both motors now respond to tilt. Assembled the whole thing onto
+the chassis.
+
+**Still to do:** solder one motor wire that won't stay seated, then tune. At the
+current gains the wheels only move on a fair-sized tilt - small commands fall
+below the geared motors' start threshold (stiction), so the tuning fix is a
+higher `Kp` plus a minimum-PWM floor so small corrections still turn the wheels.
+Balancing itself is untested and waits on tuning.
+
 ---
 
 <!-- Copy this template for each new entry:
