@@ -4,15 +4,16 @@
 //   think  - PID turns tilt error into a signed motor command
 //   act    - TB6612FNG drives BOTH motors with that command
 //
-// Verified on hardware (2026-08-24, one motor + serial): fused angle -> PID ->
-// command is correct - it scales with lean, flips direction, the 45-degree
-// fall-cutoff fires, and the D-term damps as it returns upright. NOT yet tested:
-// two-motor drive under battery power, and actual balancing (needs assembly +
-// tuning).
+// ORIENTATION: the IMU is mounted vertically on the standing bot. Measured raw
+// accel showed forward/back tilt lives on the X-Z plane (ax swings, az ~ -g) and
+// the Y gyro axis - NOT the Y-Z / X the flat code assumed. So the angle is
+// atan2(ax, -az) and the gyro rate is gy. A small offset (BALANCE_OFFSET) is
+// subtracted so upright reads ~0 instead of ~180 (which sat on the atan2
+// wraparound and made the angle jump). Fine-tune BALANCE_OFFSET so it truly
+// balances. Balancing itself is NOT yet tuned.
 //
-// IMU: MPU6500 (WHO_AM_I = 0x70), read directly over I2C. Gyro is already deg/s
-// (raw/131) - no rad/s conversion. atan2 returns radians, so only the accel
-// angle gets * 180/PI.
+// IMU: MPU6500 (WHO_AM_I = 0x70), read directly over I2C. Gyro already deg/s
+// (raw/131) - no rad/s conversion. atan2 returns radians, so * 180/PI.
 
 #include <Arduino.h>
 #include <Wire.h>
@@ -42,20 +43,25 @@ const int PWM_CH_A = 0;
 const int PWM_CH_B = 1;
 const int PWM_FREQ = 1000;   // Hz
 const int PWM_RES  = 8;      // bits -> duty 0..255
-const int MAX_CMD  = 255;    // motor command clamp
+const int MAX_CMD  = 180;    // command clamp - kept below 255 during testing so a
+                             // stalled/oscillating motor can't overheat. Raise
+                             // toward 255 once it balances reliably.
 
 // ---------------- Complementary filter ----------------
-const float ALPHA     = 0.98;   // 98% gyro, 2% accel
-const float GYRO_SIGN = 1.0;    // flip to -1.0 if fused angle diverges from accel
-float angle    = 0.0;           // fused tilt angle (deg)
-float gyroBias = 0.0;           // resting gyro offset (deg/s)
+const float ALPHA         = 0.98;   // 98% gyro, 2% accel
+const float GYRO_SIGN     = 1.0;    // flip to -1.0 if fused angle diverges from accel
+const float BALANCE_OFFSET = 7.0;   // deg subtracted so upright reads ~0 (from the
+                                    // orientation diagnostic). Nudge to find the
+                                    // true balance point during tuning.
+float angle    = 0.0;               // fused tilt angle (deg), ~0 at upright
+float gyroBias = 0.0;               // resting gyro offset (deg/s)
 unsigned long lastTime = 0;
 
 // ---------------- PID ----------------
-// Gains are starting guesses from sim - UNTUNED on hardware (real tuning needs
-// the robot physically balancing). Ki stays 0 until P and D are dialed in.
+// Gains are starting guesses - UNTUNED on hardware. Ki stays 0 until P and D
+// are dialed in.
 float Kp = 25.0, Ki = 0.0, Kd = 0.8;
-const float TARGET_ANGLE = 0.0;     // upright
+const float TARGET_ANGLE = 0.0;     // upright (angle is offset so this is 0)
 const float MAX_I        = 150.0;   // integral clamp (anti-windup, for when Ki>0)
 const float FALL_LIMIT   = 45.0;    // deg past which the bot is "fallen" -> stop
 float errorSum  = 0.0;
@@ -69,8 +75,9 @@ void writeReg(uint8_t reg, uint8_t val) {
   Wire.endTransmission();
 }
 
-// Reads accel-y/z (m/s^2) and gyro-x (deg/s) in one burst.
-void readSensor(float &ay, float &az, float &gx) {
+// Reads accel-x/z (m/s^2) and gyro-y (deg/s) - the axes that carry the bot's
+// forward/back tilt in this mounting.
+void readSensor(float &ax, float &az, float &gy) {
   Wire.beginTransmission(MPU);
   Wire.write(ACCEL_XOUT_H);
   Wire.endTransmission(false);
@@ -79,22 +86,28 @@ void readSensor(float &ay, float &az, float &gx) {
   uint8_t buf[14];
   for (int i = 0; i < 14; i++) buf[i] = Wire.read();
 
-  int16_t rawAy = (buf[2] << 8) | buf[3];
-  int16_t rawAz = (buf[4] << 8) | buf[5];
-  int16_t rawGx = (buf[8] << 8) | buf[9];
+  int16_t rawAx = (buf[0]  << 8) | buf[1];    // accel X
+  int16_t rawAz = (buf[4]  << 8) | buf[5];    // accel Z
+  int16_t rawGy = (buf[10] << 8) | buf[11];   // gyro Y
 
-  ay = rawAy / 16384.0 * 9.81;   // +-2g  -> 16384 LSB/g
+  ax = rawAx / 16384.0 * 9.81;   // +-2g  -> 16384 LSB/g
   az = rawAz / 16384.0 * 9.81;
-  gx = rawGx / 131.0;            // +-250 dps -> 131 LSB/(deg/s), already deg/s
+  gy = rawGy / 131.0;            // +-250 dps -> 131 LSB/(deg/s), already deg/s
+}
+
+// tilt angle from accel: forward/back lives on the X-Z plane, upright offset
+// removed so it reads ~0.
+float accelTilt(float ax, float az) {
+  return atan2(ax, -az) * 180.0 / PI - BALANCE_OFFSET;
 }
 
 // Average many still samples to learn the resting gyro offset.
 float calibrateGyroBias(int samples) {
   float sum = 0.0;
   for (int i = 0; i < samples; i++) {
-    float ay, az, gx;
-    readSensor(ay, az, gx);
-    sum += gx;
+    float ax, az, gy;
+    readSensor(ax, az, gy);
+    sum += gy;
     delay(3);
   }
   return sum / samples;
@@ -139,21 +152,21 @@ void setup() {
   Serial.println("Calibrating gyro - keep still...");
   gyroBias = calibrateGyroBias(500);
 
-  float ay, az, gx;                 // seed angle from the accelerometer
-  readSensor(ay, az, gx);
-  angle = atan2(ay, az) * 180.0 / PI;
+  float ax, az, gy;                 // seed angle from the accelerometer
+  readSensor(ax, az, gy);
+  angle = accelTilt(ax, az);
 
   lastTime = millis();
   Serial.println("Control loop running.");
 }
 
 void loop() {
-  float ay, az, gx;
-  readSensor(ay, az, gx);
+  float ax, az, gy;
+  readSensor(ax, az, gy);
 
   // --- sense: fused tilt angle ---
-  float accelAngle = atan2(ay, az) * 180.0 / PI;   // radians -> deg
-  float gyroRate   = GYRO_SIGN * (gx - gyroBias);  // already deg/s
+  float accelAngle = accelTilt(ax, az);            // ~0 upright, +/- for back/forward
+  float gyroRate   = GYRO_SIGN * (gy - gyroBias);  // already deg/s
 
   unsigned long now = millis();
   float dt = (now - lastTime) / 1000.0;
