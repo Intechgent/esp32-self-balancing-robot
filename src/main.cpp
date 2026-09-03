@@ -29,14 +29,14 @@ const int PWMA = 25;   // speed (PWM)
 const int AIN1 = 26;   // direction
 const int AIN2 = 27;   // direction
 // Channel B (other wheel)
-const int PWMB = 13;   // speed (PWM)
+const int PWMB = 14;   // speed (PWM)
 const int BIN1 = 32;   // direction
-const int BIN2 = 33;   // direction
+const int BIN2 = 13;   // direction
 
 // The two motors sit mirrored on the chassis, so the same command can spin them
 // opposite ways. If the bot spins in place instead of driving straight, flip
 // this to true (or swap one motor's output wires).
-const bool MOTOR_B_INVERT = false;
+const bool MOTOR_B_INVERT = true;   // motors are mirrored on the chassis
 
 // ledc PWM - one channel per motor
 const int PWM_CH_A = 0;
