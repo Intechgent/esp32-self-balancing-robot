@@ -297,6 +297,65 @@ Balancing itself is untested and waits on tuning.
 
 ---
 
+## 2026-08-28 - Orientation fix, a channel-B pin bug, and first tuning attempts
+
+**What I did:**
+Picked the project back up after a break to debug the assembled bot: fixed the
+IMU's angle for its vertical mounting, found and fixed a motor wiring/pin bug,
+and made the first live `Kp` tuning attempts.
+
+**Bug 1 - upright read ~-176°, not 0°:**
+The angle formula (`atan2(ay, az)`) was written when the IMU sat flat in
+simulation. Mounted vertically on the standing bot, forward/back tilt actually
+shows up on the **X-Z accelerometer plane and the Y gyro axis**. I confirmed
+this with a raw-axis diagnostic (holding the bot upright, tipped forward, tipped
+back, and logging `ax/ay/az/gx/gy/gz` at each). Fixed the angle to
+`atan2(ax, -az)` with a small offset so upright reads ~0 instead of sitting on
+the atan2 ±180° wraparound (which caused wild jumps between readings).
+
+**Bug 2 - one motor only ever spun one physical direction:**
+Direction control on channel B wasn't toggling correctly - the wheel didn't
+reverse between FWD and REV no matter the command. Traced it to a pin mismatch:
+the code's `PWMB`/`BIN1`/`BIN2` didn't match the GPIOs actually wired on the
+board (mixed up during rewiring). Fixed by matching the code to the real
+wiring (`PWMB=14, BIN1=32, BIN2=13`) and setting `MOTOR_B_INVERT = true` since
+the two motors are mounted mirrored. Verified with a direct motor test
+(bypassing the IMU/PID entirely) that each motor reverses correctly and both
+now drive the same way.
+
+**Also fixed:** `BALANCE_OFFSET` needed recalibrating (7.0 -> 1.5) after all the
+rewiring shifted the IMU slightly and upright drifted to ~-5.5°.
+
+**First tuning observations:**
+With `Kp=25`, small leans produced too small a command to react in time (a 3°
+lean only gave `cmd ≈ 75/220`), so the bot kept falling until the lean was
+already large, then the command spiked and overcorrected - it looked like
+"slow response, then too fast." Raised `Kp` to 60 so smaller leans get a
+stronger, earlier response. Also raised `MAX_CMD` from 180 to 220 - 180
+couldn't arrest a ~20° lean before it kept climbing.
+
+**What I learned:**
+- A control loop can look "sluggish" for reasons that have nothing to do with
+  timing: here it was a gain too small for small errors, not a slow loop.
+  Reading the actual `cmd` numbers at different lean angles (not just watching
+  the bot) is what revealed it.
+- Intermittent I2C errors (`requestFrom Error -1/263`) reappeared during this
+  session from wire handling - worth remembering that any "weird" control
+  behaviour should first be checked against a clean, error-free serial log,
+  or you end up tuning against corrupted data.
+- Debugging a two-motor system needs isolation exactly like the sensor debugging
+  did: a direct motor test with no IMU/PID in the loop was what proved the pin
+  bug was electrical, not a control/tuning issue.
+
+**Status at time of writing:** the full sense -> think -> act loop runs
+correctly on hardware - orientation, both motors' direction, and the control
+sign have all been verified. Sustained self-balancing has **not** been
+achieved; `Kp=60, Ki=0, Kd=0.8` is a first tuning pass, not a converged result.
+Given time constraints, this may be the final state of the tuning effort - see
+the README's Results section for the honest summary.
+
+---
+
 <!-- Copy this template for each new entry:
 
 ## YYYY-MM-DD - [Short title]
