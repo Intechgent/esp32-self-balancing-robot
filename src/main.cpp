@@ -43,24 +43,29 @@ const int PWM_CH_A = 0;
 const int PWM_CH_B = 1;
 const int PWM_FREQ = 1000;   // Hz
 const int PWM_RES  = 8;      // bits -> duty 0..255
-const int MAX_CMD  = 180;    // command clamp - kept below 255 during testing so a
-                             // stalled/oscillating motor can't overheat. Raise
-                             // toward 255 once it balances reliably.
+const int MAX_CMD  = 220;    // command clamp - raised from 180 (2026-08-28): 180
+                             // couldn't arrest a ~20 deg lean in time. Wheels are
+                             // free-spinning (not stalled) at this level, so it's
+                             // safe; only lower it again if a motor starts running hot.
 
 // ---------------- Complementary filter ----------------
 const float ALPHA         = 0.98;   // 98% gyro, 2% accel
 const float GYRO_SIGN     = 1.0;    // flip to -1.0 if fused angle diverges from accel
-const float BALANCE_OFFSET = 7.0;   // deg subtracted so upright reads ~0 (from the
-                                    // orientation diagnostic). Nudge to find the
+const float BALANCE_OFFSET = 1.5;   // deg subtracted so upright reads ~0. Recalibrated
+                                    // 2026-08-28 (was 7.0) after rewiring shifted the
+                                    // IMU slightly. Nudge to find the
                                     // true balance point during tuning.
 float angle    = 0.0;               // fused tilt angle (deg), ~0 at upright
 float gyroBias = 0.0;               // resting gyro offset (deg/s)
 unsigned long lastTime = 0;
 
 // ---------------- PID ----------------
-// Gains are starting guesses - UNTUNED on hardware. Ki stays 0 until P and D
-// are dialed in.
-float Kp = 25.0, Ki = 0.0, Kd = 0.8;
+// Gains - being tuned on hardware. Ki stays 0 until P and D are dialed in.
+// 2026-08-28: raised Kp from 25 - small leans barely got a response (25 * 3deg
+// = only 75/220 command), so it kept falling until the lean was already large,
+// then overcorrected hard. Kp=60 reacts harder to small leans, catching them
+// sooner instead of needing a big lean to produce a big command.
+float Kp = 60.0, Ki = 0.0, Kd = 0.8;
 const float TARGET_ANGLE = 0.0;     // upright (angle is offset so this is 0)
 const float MAX_I        = 150.0;   // integral clamp (anti-windup, for when Ki>0)
 const float FALL_LIMIT   = 45.0;    // deg past which the bot is "fallen" -> stop
