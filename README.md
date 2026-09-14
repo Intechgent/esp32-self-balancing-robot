@@ -13,9 +13,11 @@
 > started live `Kp`/`Kd` tuning. Sustained self-balancing hasn't been reached yet
 > within the project timeline. See [Results](#results) for the honest detail.
 
-<!-- Demo video goes here once recorded: media/demo.gif or a short clip link.
-     Even without full balance, a clip of the serial angle/cmd reacting to tilt
-     and the wheels driving under it is worth including. -->
+![Tobble, assembled](media/chassis-front.webp)
+
+📹 **[Watch the demo clip](media/demo.mp4)** — a slight manual tilt on the assembled
+robot; not a balancing run, just the closed loop visibly reacting (wheels
+responding to the tilt in the correct direction)
 
 ---
 
@@ -117,9 +119,15 @@ flowchart LR
 | Prototyping | 830-point breadboard, Dupont jumpers, multimeter | Wiring + debugging |
 | Cable | USB-A → USB-C data cable | Programming the ESP32 |
 
+![Empty chassis with wheels and motors mounted](media/chassis-empty.webp)
+*The hand-built body before electronics went in — inverted-pendulum layout, motors and wheels at the base.*
+
 ---
 
 ## Wiring
+
+![ESP32 wired on the breadboard](media/esp32-closeup.webp)
+*ESP32 DevKit with the IMU and driver control lines connected.*
 
 | From | To (ESP32 / power) | Notes |
 |---|---|---|
@@ -142,6 +150,9 @@ flowchart LR
 > signals. This — plus dead breadboard holes and a channel-B pin mismatch —
 > caused most of the debugging time on this project. The
 > [Build Log](docs/BUILD_LOG.md) has the full multimeter-driven hunt for each.
+
+![Wiring close-up: battery, breadboard, IMU and driver](media/wiring-closeup.webp)
+![Full assembly, side view](media/assembly-overview.webp)
 
 ---
 
@@ -215,9 +226,8 @@ iterations, not unsolved software. For a first hardware project, building and
 verifying an entire closed-loop control chain on real, imperfect hardware — and
 debugging every layer of it with a multimeter — is the result I'm proud of.
 
-<!-- Add a short clip here (media/demo.gif) of the serial angle/cmd reacting to
-     tilt and the wheels responding — the clearest proof the loop works, even
-     without sustained balance. -->
+See the [demo clip](media/demo.mp4) at the top of this README for the closed
+loop reacting to a manual tilt.
 
 ---
 
