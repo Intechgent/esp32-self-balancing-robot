@@ -1,17 +1,18 @@
 # Tobble 🤖
 
-> **Tobble** — a self-balancing two-wheeled robot (it tips, it wobbles, it's learning to stay up).
+> **Tobble** — a self-balancing two-wheeled robot (it tips, it wobbles, and — for now — it still falls).
 > An ESP32-powered inverted-pendulum robot that reads its tilt from an IMU and runs a real-time PID control loop to drive its wheels back under the fall.
 
-![Status](https://img.shields.io/badge/status-control%20loop%20verified%20%7C%20tuning%20in%20progress-orange)
+![Status](https://img.shields.io/badge/status-archived-lightgrey)
 ![Platform](https://img.shields.io/badge/platform-ESP32-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-> **Honest status:** the full **sense → think → act** control system is built,
-> assembled, and **verified working on the physical robot** — tilting the body
-> produces the correct motor command, direction, and wheel response, and I've
-> started live `Kp`/`Kd` tuning. Sustained self-balancing hasn't been reached yet
-> within the project timeline. See [Results](#results) for the honest detail.
+> **Project status: archived, complete as far as it goes.** The full
+> **sense → think → act** control system is built, assembled, and **verified
+> working on the physical robot** — tilting the body produces the correct motor
+> command, direction, and wheel response. I ran out of project time before
+> `Kp`/`Kd` tuning converged on sustained self-balancing, and I'm not continuing
+> this build. See [Results](#results) for the honest final account.
 
 ![Tobble, assembled](media/chassis-front.webp)
 
@@ -75,19 +76,19 @@ command:
 output = Kp·error + Ki·errorSum + Kd·dError        // clamped to the motor range
 ```
 
-Current gains (first tuning pass, not converged): **Kp = 60, Ki = 0, Kd = 0.8**.
+Final gains, left as the last tuning checkpoint: **Kp = 60, Ki = 0, Kd = 0.8**.
 
 - **Kp (proportional)** — pushes back in proportion to how far it's tilted.
   Started at 25; on hardware a small ~3° lean only produced a weak command, so
   the bot kept falling until the lean was already large — then the command
-  spiked and overcorrected. Raising Kp to 60 makes small leans get a stronger,
-  earlier response, which is the direction real tuning needs to go.
+  spiked and overcorrected. Raising Kp to 60 made small leans get a stronger,
+  earlier response, the right direction for tuning to continue in.
 - **Kd (derivative)** — damps based on *how fast* the angle is changing, to kill
-  the wobble/overshoot that Kp alone causes. Still at its initial value; the
-  next tuning step is raising this alongside Kp.
+  the wobble/overshoot that Kp alone causes. Left at its initial value; raising
+  this alongside Kp was the planned next step.
 - **Ki (integral)** — left at **0** on purpose. It removes slow steady lean, but
   needs Kp/Kd stable first and needs anti-windup (the code clamps `errorSum` for
-  exactly this reason, ready for when Ki turns on).
+  exactly this reason, ready for whoever turns it on next).
 
 The code also enforces a **±45° fall-cutoff** (motors stop once toppled) and a
 **command clamp** (raised from 180 to 220 once testing showed the wheels were
@@ -209,29 +210,33 @@ tuning attempts.
   mismatch that made one motor spin only one direction, and an IMU angle formula
   that didn't match the physical mounting.
 
-**What I haven't reached — sustained self-balancing.** With `Kp=25` the bot
+**What wasn't reached — sustained self-balancing.** With `Kp=25` the bot
 reacted too weakly to small leans and fell before catching itself; raising
-`Kp=60` improved the early response, but tuning is not converged — it currently
-overcorrects/oscillates rather than settling. Two honest reasons I ran out of
-runway before finishing:
+`Kp=60` improved the early response, but tuning wasn't taken to convergence — it
+still overcorrects/oscillates rather than settling. This project is now
+**archived at that point**, for two honest reasons:
 1. **Tuning is inherently iterative** — each `Kp`/`Kd` adjustment needs a live
    re-test, and converging on stable gains by hand takes many cycles.
-2. **Time** — this entry is being written with the project's remaining time
-   very short, so the tuning pass documented here may be the final state.
+2. **Time** — the project window closed before another tuning pass was possible,
+   so `Kp=60, Ki=0, Kd=0.8` is the final recorded state, not a converged result.
 
 **Takeaway:** the control *system* — sensor fusion, PID, safety cutoffs, two
 motors driving in the correct sign and direction — is complete and demonstrably
-correct on real hardware. The distance from here to a balancing robot is tuning
+correct on real hardware. The distance from here to a balancing robot was tuning
 iterations, not unsolved software. For a first hardware project, building and
 verifying an entire closed-loop control chain on real, imperfect hardware — and
-debugging every layer of it with a multimeter — is the result I'm proud of.
+debugging every layer of it with a multimeter — is the result I'm proud of, even
+without the final balance.
 
 See the [demo clip](media/demo.mp4) at the top of this README for the closed
 loop reacting to a manual tilt.
 
 ---
 
-## Future Work
+## Future Work (if picked back up)
+
+This project is archived, but the next steps are clear for anyone continuing it
+— including a future version of me:
 
 - [ ] **Finish tuning** to sustained balance (continue the Kp/Kd search; add a
       minimum-PWM floor for the geared motors' stiction near upright)

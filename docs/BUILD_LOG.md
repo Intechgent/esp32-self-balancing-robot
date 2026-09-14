@@ -351,8 +351,24 @@ couldn't arrest a ~20° lean before it kept climbing.
 correctly on hardware - orientation, both motors' direction, and the control
 sign have all been verified. Sustained self-balancing has **not** been
 achieved; `Kp=60, Ki=0, Kd=0.8` is a first tuning pass, not a converged result.
-Given time constraints, this may be the final state of the tuning effort - see
-the README's Results section for the honest summary.
+
+---
+
+## Project archived
+
+Running out of project time before another tuning pass was possible, I'm
+closing this build here. `Kp=60, Ki=0, Kd=0.8` is the final recorded state, not
+a converged one - the bot reacts correctly to tilt but still overcorrects
+rather than settling into balance.
+
+I'm choosing to end the log on that honestly rather than stretch it out: the
+part I set out to understand - building and debugging a real closed-loop
+control system across sensing, filtering, control, and actuation, on hardware
+that fought back at every layer - is done, verified, and documented above.
+Reaching sustained balance was always going to be the last, most iterative
+step, and it's the one that needed time I no longer have. See the README's
+[Results](../README.md#results) and [Future Work](../README.md#future-work-if-picked-back-up)
+sections for where this would continue.
 
 ---
 
