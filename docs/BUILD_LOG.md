@@ -219,14 +219,18 @@ I isolated it one layer at a time instead:
 - Motor fine (spun on a single bare cell)
 - Common ground, STBY, VCC vs VM, channel A vs B - all checked; even swapped the
   motor to channel B and it was still dead.
-The actual cause was the **battery holder**: single cells spun the motor, but the
-assembled holder (both cells in series, through the switch) delivered no power to
-its output wires - a bad internal contact. A good driver with no VM power looks
-exactly like a broken driver, on both channels.
+The actual cause was somewhere in the assembled battery pack: single cells spun
+the motor individually, but the assembled setup (both cells in series, through
+the holder and switch) delivered no power to `VM`. I didn't pin down the exact
+mechanism at the time (a bad switch/spring contact and a cell reversed in the
+holder were both plausible, and I'm honestly no longer certain which it was), but
+the practical fix was the same either way: swap to a fresh holder and reseat the
+cells carefully. A good driver with no VM power looks exactly like a broken
+driver, on both channels.
 
 **What I learned:**
 - Don't anchor on the newest / most complex part. I suspected the driver for ages
-  when the dumbest component - a ~$2 holder - was the fault.
+  when it turned out to be something in the ~$2 battery pack/holder instead.
 - Test the *assembled* power source, not just individual cells. Checking the
   holder's real output was the one step I skipped early and should have done first.
 - Stranded holder leads don't seat reliably in dupont/breadboard holes; they need

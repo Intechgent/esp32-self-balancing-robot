@@ -110,7 +110,7 @@ The body before any electronics went in. Motors and wheels at the base, everythi
 | TB6612 STBY | 3V3 | has to be held HIGH or the driver just sits there doing nothing |
 | All grounds | tied together | ESP32, driver, and battery negative all share one ground |
 
-Almost every hardware bug I hit traced back to this table somewhere: a dead battery holder that looked fine until it was under load, a couple of dead breadboard holes that were quietly starving the IMU of power, and a channel-B pin that got wired to the wrong GPIO so one motor would only ever spin in one direction. The [build log](docs/BUILD_LOG.md) has the multimeter readings for each one.
+Almost every hardware bug I hit traced back to this table somewhere: a battery pack that looked fine on individual cells but delivered nothing once assembled, a couple of dead breadboard holes that were quietly starving the IMU of power, and a channel-B pin that got wired to the wrong GPIO so one motor would only ever spin in one direction. The [build log](docs/BUILD_LOG.md) has the multimeter readings for each one.
 
 ![Wiring close-up: battery, breadboard, IMU and driver](media/wiring-closeup.webp)
 ![Full assembly, side view](media/assembly-overview.webp)
@@ -151,7 +151,7 @@ The dated, honest version of all of this: what broke, what I tried, what actuall
 
 The sensor fusion holds a stable angle - steady when it's not moving, tracks a real tilt, and the gyro drift is small enough that it doesn't matter over the timescales this loop runs at. The full loop runs on hardware: tilt the body and the motor command responds correctly, scaling with how far it's tipped, cutting off past 45°, and both motors turn the right way together. I checked all of that separately with a plain motor test before trusting the full loop's behaviour.
 
-Along the way I found and fixed a handful of real, physical faults using a multimeter: a battery holder that had failed internally, breadboard contacts that had gone bad and were quietly under-powering the IMU, a motor wired to the wrong control pins, and an angle formula that assumed the wrong mounting orientation.
+Along the way I found and fixed a handful of real, physical faults using a multimeter: a battery pack that delivered no power once assembled even though the individual cells were fine, breadboard contacts that had gone bad and were quietly under-powering the IMU, a motor wired to the wrong control pins, and an angle formula that assumed the wrong mounting orientation.
 
 **What doesn't work: it doesn't balance.**
 
