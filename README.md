@@ -16,7 +16,7 @@ A self-balancing two-wheeled robot built on an ESP32. It reads its own tilt with
 
 ## Why I built this
 
-First hardware project of my MSc in AI & Robotics. Everything I'd done up to this point was in simulation, and I wanted to actually feel what it's like when the physics gets messy and the parts don't behave the way the datasheet says.
+My first hardware project, done alongside my MSc in AI & Robotics. Everything I'd done in the degree so far was in simulation, and I wanted to actually feel what it's like when the physics gets messy and the parts don't behave the way the datasheet says.
 
 A self-balancing robot is an inverted pendulum: left alone it falls over, and staying upright means running a sense-think-act loop fast enough and correctly enough, over and over:
 
