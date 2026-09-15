@@ -367,7 +367,8 @@ control system across sensing, filtering, control, and actuation, on hardware
 that fought back at every layer - is done, verified, and documented above.
 Reaching sustained balance was always going to be the last, most iterative
 step, and it's the one that needed time I no longer have. See the README's
-[Results](../README.md#results) and [Future Work](../README.md#future-work-if-picked-back-up)
+[Results](../README.md#results) and
+[What I'd do next](../README.md#what-id-do-next-if-i-picked-this-back-up)
 sections for where this would continue.
 
 ---
