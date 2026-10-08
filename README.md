@@ -80,7 +80,7 @@ flowchart LR
 | Motor driver | TB6612FNG (a "HW-048" clone board) | Drives the two motors |
 | Motors + wheels | 2x TT gear motors with wheels, from a 2WD kit | Actuation |
 | Chassis | Hand-built, roughly cardboard-and-foamboard - battery on top, electronics in the middle, motors at the base | Body |
-| Power | 2x 18650 Li-ion cells in series, 7.4V | Runs the motors and the board |
+| Power | 2x 18650 Li-ion cells in series, 7.4V | Runs the motors. The ESP32 ran off USB for every test in this build |
 | Prototyping | Breadboard, jumper wires, a multimeter | Wiring and, mostly, debugging |
 | Cable | USB-A to USB-C | Programming the ESP32 |
 
@@ -167,8 +167,8 @@ The [demo clip](media/demo.mp4) up top shows the loop reacting to a tilt - not b
 
 - Keep tuning Kp and Kd until it actually holds itself upright, and probably add a minimum PWM floor since these gear motors don't respond at all below a certain command
 - Drive it over WiFi or Bluetooth once it can balance on its own
-- Use the ultrasonic sensor on the chassis for basic obstacle avoidance
-- Use the wheel encoders to hold position, not just angle
+- Add an ultrasonic sensor for basic obstacle avoidance
+- Add wheel encoders to hold position, not just angle
 - Eventually replace the hand-tuned PID with something learned in simulation and transferred over - that's the direction I'm actually most interested in
 
 ---

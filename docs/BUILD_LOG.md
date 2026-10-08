@@ -374,19 +374,3 @@ step, and it's the one that needed time I no longer have. See the README's
 [Results](../README.md#results) and
 [What I'd do next](../README.md#what-id-do-next-if-i-picked-this-back-up)
 sections for where this would continue.
-
----
-
-<!-- Copy this template for each new entry:
-
-## YYYY-MM-DD - [Short title]
-
-**What I did:**
-
-**What went wrong:**
-
-**How I fixed it:**
-
-**What I learned:**
-
--->
