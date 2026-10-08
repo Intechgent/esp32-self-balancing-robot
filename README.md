@@ -48,11 +48,11 @@ A PID controller takes the error between where the robot is and upright, and tur
 output = Kp·error + Ki·errorSum + Kd·dError        // clamped to the motor range
 ```
 
-Where it landed: Kp = 60, Ki = 0, Kd = 0.8. Not a converged, well-tuned result, just the last checkpoint before I ran out of time.
+Where it landed: Kp = 60, Ki = 0, Kd = 0.8. That's what it took to actually balance, tethered to USB for power.
 
-Kp started at 25. On real hardware that was too weak - a small 3° lean barely produced any correction, so the robot kept tipping until the lean was big, and then the response would spike and overshoot. Pushing Kp up to 60 got it reacting sooner to small errors, which is the right direction, just not far enough along.
+Kp started at 25. On real hardware that was too weak - a small 3° lean barely produced any correction, so the robot kept tipping until the lean was big, and then the response would spike and overshoot. Pushing Kp up to 60 got it reacting sooner to small errors, and that was enough for it to hold itself upright.
 
-Kd is still at its starting value. Raising it alongside Kp to actually damp the overshoot was the obvious next step, and it's the step I didn't get to.
+Kd stayed at its starting value of 0.8, and that turned out to be enough to damp the overshoot once Kp was raised.
 
 Ki stayed at zero the whole time, on purpose. It's meant to correct for a steady, unchanging lean, but you only want to turn it on once P and D are already stable, and it needs an anti-windup clamp or it'll overshoot badly on recovery. The clamp's already in the code, waiting.
 
