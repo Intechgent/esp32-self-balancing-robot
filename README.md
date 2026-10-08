@@ -6,7 +6,7 @@ A self-balancing two-wheeled robot built on an ESP32. It reads its own tilt with
 ![Platform](https://img.shields.io/badge/platform-ESP32-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-**This project is archived.** The control system works end to end and I've verified it on the actual robot, but I never got the PID gains tuned well enough for it to hold its balance on its own, and I've run out of time to keep going. The [Results](#results) section below has the honest breakdown of what works and what doesn't.
+**This project is archived.** The control system works end to end and it balances on the real robot while tethered to USB, but I never got it running untethered on the battery, and I've run out of time to keep going. The [Results](#results) section below has the honest breakdown of what works and what doesn't.
 
 ![Tobble, assembled](media/chassis-front.webp)
 
@@ -149,24 +149,22 @@ The dated, honest version of all of this: what broke, what I tried, what actuall
 
 **What actually works, confirmed on the real robot:**
 
-The sensor fusion holds a stable angle - steady when it's not moving, tracks a real tilt, and the gyro drift is small enough that it doesn't matter over the timescales this loop runs at. The full loop runs on hardware: tilt the body and the motor command responds correctly, scaling with how far it's tipped, cutting off past 45°, and both motors turn the right way together. I checked all of that separately with a plain motor test before trusting the full loop's behaviour.
+The sensor fusion holds a stable angle - steady when it's not moving, tracks a real tilt, and the gyro drift is small enough that it doesn't matter over the timescales this loop runs at. The full loop runs on hardware and balances the robot while it's tethered to USB for power, with the command scaling correctly with how far it's tipped, cutting off past 45°, and both motors turning the right way together. I checked all of that separately with a plain motor test before trusting the full loop's behaviour.
 
 Along the way I found and fixed a handful of real, physical faults using a multimeter: a battery pack that delivered no power once assembled even though the individual cells were fine, breadboard contacts that had gone bad and were quietly under-powering the IMU, a motor wired to the wrong control pins, and an angle formula that assumed the wrong mounting orientation.
 
-**What doesn't work: it doesn't balance.**
+**It balances, tethered to USB.** At Kp=25 it reacted too slowly to small tilts and just fell. Kp=60 got it reacting sooner, and at that point it held itself upright while connected to USB for power. I never got it running on the battery pack alone, and I ran out of time before testing that properly.
 
-At Kp=25 it reacted too slowly to small tilts and just fell. Kp=60 got it reacting sooner, but it now overcorrects instead of settling, and I didn't have time for another round of tuning to fix that. That's genuinely just an iteration problem, not a mystery - PID tuning by hand is trial and error, each attempt needs a live test, and I ran out of runway before it converged.
+I think the honest way to put it is: the hard part - building a working sense-think-act loop across a sensor, a filter, a controller, and real motors, and getting every layer of that to actually agree with each other on real hardware - is done, and it works. What's missing is cutting the USB tether and proving it holds up on battery power alone, which needed time I didn't have left.
 
-I think the honest way to put it is: the hard part - building a working sense-think-act loop across a sensor, a filter, a controller, and real motors, and getting every layer of that to actually agree with each other on real hardware - is done. What's missing is the last stretch of iteration to make the numbers converge, which needed time I didn't have left.
-
-The [demo clip](media/demo.mp4) up top shows the loop reacting to a tilt - not balancing, just proof the whole chain responds correctly.
+The [demo clip](media/demo.mp4) up top is an earlier hand-tilt test, not a recording of it balancing. I didn't get a chance to film that before archiving the project.
 
 ---
 
 ## What I'd do next, if I picked this back up
 
-- Keep tuning Kp and Kd until it actually holds itself upright, and probably add a minimum PWM floor since these gear motors don't respond at all below a certain command
-- Drive it over WiFi or Bluetooth once it can balance on its own
+- Get it balancing on the battery pack alone, without the USB tether
+- Drive it over WiFi or Bluetooth once it's fully untethered
 - Add an ultrasonic sensor for basic obstacle avoidance
 - Add wheel encoders to hold position, not just angle
 - Eventually replace the hand-tuned PID with something learned in simulation and transferred over - that's the direction I'm actually most interested in

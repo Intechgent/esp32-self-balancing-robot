@@ -219,18 +219,16 @@ I isolated it one layer at a time instead:
 - Motor fine (spun on a single bare cell)
 - Common ground, STBY, VCC vs VM, channel A vs B - all checked; even swapped the
   motor to channel B and it was still dead.
-The actual cause was somewhere in the assembled battery pack: single cells spun
-the motor individually, but the assembled setup (both cells in series, through
-the holder and switch) delivered no power to `VM`. I didn't pin down the exact
-mechanism at the time (a bad switch/spring contact and a cell reversed in the
-holder were both plausible, and I'm honestly no longer certain which it was), but
-the practical fix was the same either way: swap to a fresh holder and reseat the
-cells carefully. A good driver with no VM power looks exactly like a broken
-driver, on both channels.
+The actual cause was the battery pack's polarity markings: plus was labelled
+minus and minus was labelled plus, so the two cells in series fought each other
+instead of adding up, and `VM` saw no usable power. Single cells still spun the
+motor fine on their own because polarity didn't matter when only one cell was
+in the circuit. The fix was reseating the cells against their actual polarity,
+not the pack's printed labels.
 
 **What I learned:**
 - Don't anchor on the newest / most complex part. I suspected the driver for ages
-  when it turned out to be something in the ~$2 battery pack/holder instead.
+  when it turned out to be a mislabelled ~$2 battery pack instead.
 - Test the *assembled* power source, not just individual cells. Checking the
   holder's real output was the one step I skipped early and should have done first.
 - Stranded holder leads don't seat reliably in dupont/breadboard holes; they need
@@ -353,24 +351,26 @@ couldn't arrest a ~20° lean before it kept climbing.
 
 **Status at time of writing:** the full sense -> think -> act loop runs
 correctly on hardware - orientation, both motors' direction, and the control
-sign have all been verified. Sustained self-balancing has **not** been
-achieved; `Kp=60, Ki=0, Kd=0.8` is a first tuning pass, not a converged result.
+sign have all been verified. Sustained self-balancing has not been confirmed
+yet at this point; `Kp=60, Ki=0, Kd=0.8` is a first tuning pass. (It did
+balance, tethered to USB, in testing after this entry - see the closing
+section below.)
 
 ---
 
 ## Project archived
 
-Running out of project time before another tuning pass was possible, I'm
-closing this build here. `Kp=60, Ki=0, Kd=0.8` is the final recorded state, not
-a converged one - the bot reacts correctly to tilt but still overcorrects
-rather than settling into balance.
+After the 2026-08-28 tuning pass, `Kp=60, Ki=0, Kd=0.8` turned out to be enough:
+the bot balanced on its own while tethered to USB for power. I didn't record
+it on video and didn't get to test it running off the battery pack alone
+before I ran out of project time, so that's where I'm closing this build.
 
-I'm choosing to end the log on that honestly rather than stretch it out: the
-part I set out to understand - building and debugging a real closed-loop
-control system across sensing, filtering, control, and actuation, on hardware
-that fought back at every layer - is done, verified, and documented above.
-Reaching sustained balance was always going to be the last, most iterative
-step, and it's the one that needed time I no longer have. See the README's
+I'm choosing to end the log here rather than stretch it out: the part I set
+out to understand - building and debugging a real closed-loop control system
+across sensing, filtering, control, and actuation, on hardware that fought
+back at every layer - is done, verified, and it balances. What's left is
+cutting the USB tether and proving it holds up on battery power alone, which
+needed time I didn't have left. See the README's
 [Results](../README.md#results) and
 [What I'd do next](../README.md#what-id-do-next-if-i-picked-this-back-up)
 sections for where this would continue.
