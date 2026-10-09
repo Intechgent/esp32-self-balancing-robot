@@ -207,8 +207,8 @@ any control to it.
 
 **What I did:**
 Wired one motor to the TB6612FNG (channel A: `PWMA` + `AIN1`/`AIN2` → `AO1`/`AO2`),
-powered the driver from a single charged 18650 (~3.7 V - the holder is still
-faulty), and drove the motor forward / stop / reverse from code using the ESP32
+powered the driver from a single charged 18650 (~3.7 V - the pack is still
+mislabelled), and drove the motor forward / stop / reverse from code using the ESP32
 `ledc` PWM API. A bring-up test only - no IMU, no control - to prove the
 driver + motor + code path before wiring anything to it.
 
@@ -236,9 +236,9 @@ not the pack's printed labels.
 
 **Result:** motor runs forward and reverse on command - the "act" layer works.
 (Tested on a single cell at ~3.7 V; running it off the full 7.4 V pack is pending
-a working holder.)
+the pack's polarity being fixed.)
 
-**Next:** sort out reliable pack power (fix/replace the holder), then connect the
+**Next:** sort out reliable pack power (reseat the cells correctly), then connect the
 PID output to the motor command.
 
 ---
