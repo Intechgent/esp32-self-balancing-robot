@@ -9,8 +9,8 @@
 // the Y gyro axis - NOT the Y-Z / X the flat code assumed. So the angle is
 // atan2(ax, -az) and the gyro rate is gy. A small offset (BALANCE_OFFSET) is
 // subtracted so upright reads ~0 instead of ~180 (which sat on the atan2
-// wraparound and made the angle jump). Fine-tune BALANCE_OFFSET so it truly
-// balances. Balancing itself is NOT yet tuned.
+// wraparound and made the angle jump). It balances at the gains below,
+// tethered to USB for power; untethered on the battery pack is untested.
 //
 // IMU: MPU6500 (WHO_AM_I = 0x70), read directly over I2C. Gyro already deg/s
 // (raw/131) - no rad/s conversion. atan2 returns radians, so * 180/PI.
